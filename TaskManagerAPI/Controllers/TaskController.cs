@@ -95,5 +95,25 @@ namespace TaskManagerAPI.Controllers
             _context.SaveChanges();
             return Ok(task);
         }
+
+        [HttpDelete("{id}")]
+        public IActionResult DeleteTask(int id)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null) return Unauthorized();
+
+            var userId = int.Parse(userIdClaim.Value);
+
+            var task = _context.Tasks.FirstOrDefault(t => t.Id == id);
+
+            if (task == null) return NotFound();
+
+            if (task.AssignedUserId != userId) return NotFound();
+
+            _context.Tasks.Remove(task);
+            _context.SaveChanges();
+
+            return NoContent();
+        }
     }
 }
