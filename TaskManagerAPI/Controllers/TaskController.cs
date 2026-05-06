@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using TaskManagerAPI.Data;
 using TaskManagerAPI.Models;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+using System.ComponentModel.DataAnnotations;
 
 namespace TaskManagerAPI.Controllers
 {
@@ -21,16 +22,44 @@ namespace TaskManagerAPI.Controllers
         [HttpGet]
         public IActionResult GetTasks()
         {
-            var tasks = _context.Tasks.ToList();
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null) return Unauthorized();
+
+            var userId = int.Parse(userIdClaim.Value);
+
+            var tasks = _context.Tasks
+                .Where(t => t.AssignedUserId == userId)
+                .ToList();
+
             return Ok(tasks);
         }
 
-        [HttpPost]
-        public IActionResult CreateTask(TaskItem task)
+        public class CreateTaskDto
         {
-            task.CreatedAt = DateTime.UtcNow;
-            task.UpdatedAt = DateTime.UtcNow;
-            task.Status = "Open";
+            [Required]
+            public string Title { get; set; }
+
+            [Required]
+            public string Description { get; set; }
+        }
+
+        [HttpPost]
+        public IActionResult CreateTask(CreateTaskDto dto)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null) return Unauthorized();
+
+            var userId = int.Parse(userIdClaim.Value);
+
+            var task = new TaskItem
+            {
+                Title = dto.Title,
+                Description = dto.Description,
+                Status = "Open",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+                AssignedUserId = userId
+            };
 
             _context.Tasks.Add(task);
             _context.SaveChanges();
