@@ -79,20 +79,47 @@ namespace TaskManagerAPI.Controllers
             return Ok(task);
         }
 
+        private bool IsValidStatusTransition(string currentStatus, string newStatus)
+        {
+            if (currentStatus == newStatus) return true;
+
+            return (currentStatus, newStatus) switch
+            {
+                ("Open", "In Progress") => true,
+                ("In Progress", "Completed") => true,
+                ("Open", "Completed") => true,
+                _ => false
+            };
+        }
+
         [HttpPut("{id}")]
         public IActionResult UpdateTask(int id, TaskItem updatedTask)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (userIdClaim == null) return Unauthorized();
+
             var userId = int.Parse(userIdClaim.Value);
-            var task = _context.Tasks.FirstOrDefault(t => t.Id == id && t.AssignedUserId == userId);
-            if (task == null) return NotFound();
-            if (task.AssignedUserId != userId) return Forbid();
+
+            var task = _context.Tasks.FirstOrDefault(t => t.Id == id);
+
+            if (task == null) 
+                return NotFound();
+
+            if (task.AssignedUserId != userId) 
+                return Forbid();
+
+            if (!IsValidStatusTransition(task.Status, updatedTask.Status))
+            {
+                return BadRequest($"Invalid status transition from '{task.Status}' to '{updatedTask.Status}");
+            }
+
             task.Title = updatedTask.Title;
             task.Description = updatedTask.Description;
             task.Status = updatedTask.Status;
             task.UpdatedAt = DateTime.UtcNow;
+
             _context.SaveChanges();
+
             return Ok(task);
         }
 
