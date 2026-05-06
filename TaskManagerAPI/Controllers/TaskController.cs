@@ -66,5 +66,17 @@ namespace TaskManagerAPI.Controllers
 
             return Ok(task);
         }
+
+        [HttpGet("{id}")]
+        public IActionResult GetTaskById(int id)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null) return Unauthorized();
+            var userId = int.Parse(userIdClaim.Value);
+            var task = _context.Tasks.FirstOrDefault(t => t.Id == id && t.AssignedUserId == userId);
+            if (task == null) return NotFound();
+            if (task.AssignedUserId != userId) return Forbid();
+            return Ok(task);
+        }
     }
 }
