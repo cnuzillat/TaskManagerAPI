@@ -19,6 +19,18 @@ namespace TaskManagerAPI.Controllers
             _context = context;
         }
 
+        public class UpdateTaskDto
+        {
+            [Required]
+            public string Title { get; set; }
+
+            [Required]
+            public string Description { get; set; }
+
+            [Required]
+            public Models.TaskStatus Status { get; set; }
+        }
+
         [HttpGet]
         public IActionResult GetTasks()
         {
@@ -55,7 +67,7 @@ namespace TaskManagerAPI.Controllers
             {
                 Title = dto.Title,
                 Description = dto.Description,
-                Status = "Open",
+                Status = Models.TaskStatus.Open,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
                 AssignedUserId = userId
@@ -73,27 +85,27 @@ namespace TaskManagerAPI.Controllers
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (userIdClaim == null) return Unauthorized();
             var userId = int.Parse(userIdClaim.Value);
-            var task = _context.Tasks.FirstOrDefault(t => t.Id == id && t.AssignedUserId == userId);
+            var task = _context.Tasks.FirstOrDefault(t => t.Id == id);
             if (task == null) return NotFound();
             if (task.AssignedUserId != userId) return Forbid();
             return Ok(task);
         }
 
-        private bool IsValidStatusTransition(string currentStatus, string newStatus)
+        private bool IsValidStatusTransition(Models.TaskStatus currentStatus, Models.TaskStatus newStatus)
         {
             if (currentStatus == newStatus) return true;
 
-            return (currentStatus, newStatus) switch
+            return currentStatus switch
             {
-                ("Open", "In Progress") => true,
-                ("In Progress", "Completed") => true,
-                ("Open", "Completed") => true,
+                Models.TaskStatus.Open => newStatus == Models.TaskStatus.InProgress,
+                Models.TaskStatus.InProgress => newStatus == Models.TaskStatus.Completed,
+                Models.TaskStatus.Completed => false,
                 _ => false
             };
         }
 
         [HttpPut("{id}")]
-        public IActionResult UpdateTask(int id, TaskItem updatedTask)
+        public IActionResult UpdateTask(int id, [FromBody] UpdateTaskDto dto)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (userIdClaim == null) return Unauthorized();
@@ -108,14 +120,14 @@ namespace TaskManagerAPI.Controllers
             if (task.AssignedUserId != userId) 
                 return Forbid();
 
-            if (!IsValidStatusTransition(task.Status, updatedTask.Status))
+            if (!IsValidStatusTransition(task.Status, dto.Status))
             {
-                return BadRequest($"Invalid status transition from '{task.Status}' to '{updatedTask.Status}");
+                return BadRequest($"Invalid status transition from '{task.Status}' to '{dto.Status}'");
             }
 
-            task.Title = updatedTask.Title;
-            task.Description = updatedTask.Description;
-            task.Status = updatedTask.Status;
+            task.Title = dto.Title;
+            task.Description = dto.Description;
+            task.Status = dto.Status;
             task.UpdatedAt = DateTime.UtcNow;
 
             _context.SaveChanges();
@@ -133,9 +145,9 @@ namespace TaskManagerAPI.Controllers
 
             var task = _context.Tasks.FirstOrDefault(t => t.Id == id);
 
-            if (task == null) return NotFound();
+            if (task == null) return Forbid();
 
-            if (task.AssignedUserId != userId) return NotFound();
+            if (task.AssignedUserId != userId) return Forbid();
 
             _context.Tasks.Remove(task);
             _context.SaveChanges();
