@@ -78,5 +78,22 @@ namespace TaskManagerAPI.Controllers
             if (task.AssignedUserId != userId) return Forbid();
             return Ok(task);
         }
+
+        [HttpPut("{id}")]
+        public IActionResult UpdateTask(int id, TaskItem updatedTask)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null) return Unauthorized();
+            var userId = int.Parse(userIdClaim.Value);
+            var task = _context.Tasks.FirstOrDefault(t => t.Id == id && t.AssignedUserId == userId);
+            if (task == null) return NotFound();
+            if (task.AssignedUserId != userId) return Forbid();
+            task.Title = updatedTask.Title;
+            task.Description = updatedTask.Description;
+            task.Status = updatedTask.Status;
+            task.UpdatedAt = DateTime.UtcNow;
+            _context.SaveChanges();
+            return Ok(task);
+        }
     }
 }
