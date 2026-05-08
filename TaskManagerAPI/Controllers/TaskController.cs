@@ -1,10 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using TaskManagerAPI.Data;
-using TaskManagerAPI.Models;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
-using System.ComponentModel.DataAnnotations;
 using TaskManagerAPI.Services;
+using TaskManagerAPI.DTOs;
 
 namespace TaskManagerAPI.Controllers
 {
@@ -20,18 +18,6 @@ namespace TaskManagerAPI.Controllers
             _taskService = taskService;
         }
 
-        public class UpdateTaskDto
-        {
-            [Required]
-            public string Title { get; set; }
-
-            [Required]
-            public string Description { get; set; }
-
-            [Required]
-            public Models.TaskStatus Status { get; set; }
-        }
-
         [HttpGet]
         public IActionResult GetTasks()
         {
@@ -43,15 +29,6 @@ namespace TaskManagerAPI.Controllers
             var tasks = _taskService.GetTasksForUser(userId);
 
             return Ok(tasks);
-        }
-
-        public class CreateTaskDto
-        {
-            [Required]
-            public string Title { get; set; }
-
-            [Required]
-            public string Description { get; set; }
         }
 
         [HttpPost]
