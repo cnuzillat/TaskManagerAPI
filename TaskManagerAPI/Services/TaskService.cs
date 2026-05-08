@@ -1,5 +1,6 @@
 ﻿using TaskManagerAPI.Data;
 using TaskManagerAPI.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace TaskManagerAPI.Services
 {
@@ -11,17 +12,17 @@ namespace TaskManagerAPI.Services
             _context = context;
         }
 
-        public List<TaskItem> GetTasksForUser(int userId)
+        public async Task<List<TaskItem>> GetTasksForUser(int userId)
         {
-            return _context.Tasks.Where(t => t.AssignedUserId == userId).ToList();
+            return await _context.Tasks.Where(t => t.AssignedUserId == userId).ToListAsync();
         }
 
-        public TaskItem? GetTaskById(int taskId, int userId)
+        public async Task<TaskItem?> GetTaskById(int taskId, int userId)
         {
-            return _context.Tasks.FirstOrDefault(t => t.Id == taskId && t.AssignedUserId == userId);
+            return await _context.Tasks.FirstOrDefaultAsync(t => t.Id == taskId && t.AssignedUserId == userId);
         }
 
-        public TaskItem CreateTask(string title, string description, int userId)
+        public async Task<TaskItem> CreateTask(string title, string description, int userId)
         {
             var task = new TaskItem
             {
@@ -33,13 +34,13 @@ namespace TaskManagerAPI.Services
                 AssignedUserId = userId
             };
             _context.Tasks.Add(task);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return task;
         }
 
-        public TaskItem? UpdateTask(int taskId, string title, string description, Models.TaskStatus status, int userId)
+        public async Task<TaskItem?> UpdateTask(int taskId, string title, string description, Models.TaskStatus status, int userId)
         {
-            var task = _context.Tasks.FirstOrDefault(t => t.Id == taskId && t.AssignedUserId == userId);
+            var task = await _context.Tasks.FirstOrDefaultAsync(t => t.Id == taskId && t.AssignedUserId == userId);
             if (task == null) return null;
             if (!IsValidStatusTransition(task.Status, status))
                 throw new InvalidOperationException($"Invalid status transition from {task.Status} to {status}");
@@ -47,20 +48,20 @@ namespace TaskManagerAPI.Services
             task.Description = description;
             task.Status = status;
             task.UpdatedAt = DateTime.UtcNow;
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return task;
         }
 
-        public bool DeleteTask(int taskId, int userId)
+        public async Task<bool> DeleteTask(int taskId, int userId)
         {
-            var task = _context.Tasks.FirstOrDefault(t => t.Id == taskId && t.AssignedUserId == userId);
+            var task = await _context.Tasks.FirstOrDefaultAsync(t => t.Id == taskId && t.AssignedUserId == userId);
             if (task == null) return false;
             _context.Tasks.Remove(task);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return true;
         }
 
-        public bool IsValidStatusTransition(Models.TaskStatus currentStatus, Models.TaskStatus newStatus)
+        private bool IsValidStatusTransition(Models.TaskStatus currentStatus, Models.TaskStatus newStatus)
         {
             if (currentStatus == newStatus) return true;
             return currentStatus switch

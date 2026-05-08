@@ -19,54 +19,47 @@ namespace TaskManagerAPI.Controllers
         }
 
         [HttpGet]
-        public IActionResult GetTasks()
+        public async Task<IActionResult> GetTasks()
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null) return Unauthorized();
+            var userId = GetUserId();
+            if (userId == null) return Unauthorized();
 
-            var userId = int.Parse(userIdClaim.Value);
-
-            var tasks = _taskService.GetTasksForUser(userId);
-
+            var tasks = await _taskService.GetTasksForUser(userId.Value);
             return Ok(tasks);
         }
 
         [HttpPost]
-        public IActionResult CreateTask(CreateTaskDto dto)
+        public async Task<IActionResult> CreateTask(CreateTaskDto dto)
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null) return Unauthorized();
+            var userId = GetUserId();
+            if (userId == null) return Unauthorized();
 
-            var userId = int.Parse(userIdClaim.Value);
+            var createdTask = await _taskService.CreateTask(dto.Title, dto.Description, userId.Value);
 
-            var createdTask = _taskService.CreateTask(dto.Title, dto.Description, userId);
-
-            return Ok(createdTask);
+            return CreatedAtAction(nameof(GetTaskById), new { id = createdTask.Id }, createdTask);
         }
 
         [HttpGet("{id}")]
-        public IActionResult GetTaskById(int id)
+        public async Task<IActionResult> GetTaskById(int id)
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null) return Unauthorized();
-            var userId = int.Parse(userIdClaim.Value);
-            var task = _taskService.GetTaskById(id, userId);
+            var userId = GetUserId();
+            if (userId == null) return Unauthorized();
+
+            var task = await _taskService.GetTaskById(id, userId.Value);
             if (task == null) return NotFound();
-            if (task.AssignedUserId != userId) return Forbid();
+
             return Ok(task);
         }
 
         [HttpPut("{id}")]
-        public IActionResult UpdateTask(int id, [FromBody] UpdateTaskDto dto)
+        public async Task<IActionResult> UpdateTask(int id, [FromBody] UpdateTaskDto dto)
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null) return Unauthorized();
-
-            var userId = int.Parse(userIdClaim.Value);
+            var userId = GetUserId();
+            if (userId == null) return Unauthorized();
 
             try
             {
-                var updatedTask = _taskService.UpdateTask(id, dto.Title, dto.Description, dto.Status, userId);
+                var updatedTask = await _taskService.UpdateTask(id, dto.Title, dto.Description, dto.Status, userId.Value);
 
                 if (updatedTask == null) return NotFound();
 
@@ -79,17 +72,25 @@ namespace TaskManagerAPI.Controllers
         }
 
         [HttpDelete("{id}")]
-        public IActionResult DeleteTask(int id)
+        public async Task<IActionResult> DeleteTask(int id)
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null) return Unauthorized();
+            var userId = GetUserId();
+            if (userId == null) return Unauthorized();
 
-            var userId = int.Parse(userIdClaim.Value);
-
-            var deleted = _taskService.DeleteTask(id, userId);
+            var deleted = await _taskService.DeleteTask(id, userId.Value);
             if (!deleted) return NotFound();
 
             return NoContent();
+        }
+
+        private int? GetUserId()
+        {
+            var claim = User.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (claim == null)
+                return null;
+
+            return int.Parse(claim.Value);
         }
     }
 }
