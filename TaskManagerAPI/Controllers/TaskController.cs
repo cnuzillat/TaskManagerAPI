@@ -4,6 +4,7 @@ using TaskManagerAPI.Models;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using System.ComponentModel.DataAnnotations;
+using TaskManagerAPI.Services;
 
 namespace TaskManagerAPI.Controllers
 {
@@ -12,11 +13,11 @@ namespace TaskManagerAPI.Controllers
     [Route("api/tasks")]
     public class TaskController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly ITaskService _taskService;
 
-        public TaskController(AppDbContext context)
+        public TaskController(ITaskService taskService)
         {
-            _context = context;
+            _taskService = taskService;
         }
 
         public class UpdateTaskDto
@@ -39,9 +40,7 @@ namespace TaskManagerAPI.Controllers
 
             var userId = int.Parse(userIdClaim.Value);
 
-            var tasks = _context.Tasks
-                .Where(t => t.AssignedUserId == userId)
-                .ToList();
+            var tasks = _taskService.GetTasksForUser(userId);
 
             return Ok(tasks);
         }
@@ -63,20 +62,9 @@ namespace TaskManagerAPI.Controllers
 
             var userId = int.Parse(userIdClaim.Value);
 
-            var task = new TaskItem
-            {
-                Title = dto.Title,
-                Description = dto.Description,
-                Status = Models.TaskStatus.Open,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow,
-                AssignedUserId = userId
-            };
+            var createdTask = _taskService.CreateTask(dto.Title, dto.Description, userId);
 
-            _context.Tasks.Add(task);
-            _context.SaveChanges();
-
-            return Ok(task);
+            return Ok(createdTask);
         }
 
         [HttpGet("{id}")]
@@ -85,23 +73,10 @@ namespace TaskManagerAPI.Controllers
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (userIdClaim == null) return Unauthorized();
             var userId = int.Parse(userIdClaim.Value);
-            var task = _context.Tasks.FirstOrDefault(t => t.Id == id);
+            var task = _taskService.GetTaskById(id, userId);
             if (task == null) return NotFound();
             if (task.AssignedUserId != userId) return Forbid();
             return Ok(task);
-        }
-
-        private bool IsValidStatusTransition(Models.TaskStatus currentStatus, Models.TaskStatus newStatus)
-        {
-            if (currentStatus == newStatus) return true;
-
-            return currentStatus switch
-            {
-                Models.TaskStatus.Open => newStatus == Models.TaskStatus.InProgress,
-                Models.TaskStatus.InProgress => newStatus == Models.TaskStatus.Completed,
-                Models.TaskStatus.Completed => false,
-                _ => false
-            };
         }
 
         [HttpPut("{id}")]
@@ -112,27 +87,18 @@ namespace TaskManagerAPI.Controllers
 
             var userId = int.Parse(userIdClaim.Value);
 
-            var task = _context.Tasks.FirstOrDefault(t => t.Id == id);
-
-            if (task == null) 
-                return NotFound();
-
-            if (task.AssignedUserId != userId) 
-                return Forbid();
-
-            if (!IsValidStatusTransition(task.Status, dto.Status))
+            try
             {
-                return BadRequest($"Invalid status transition from '{task.Status}' to '{dto.Status}'");
+                var updatedTask = _taskService.UpdateTask(id, dto.Title, dto.Description, dto.Status, userId);
+
+                if (updatedTask == null) return NotFound();
+
+                return Ok(updatedTask);
             }
-
-            task.Title = dto.Title;
-            task.Description = dto.Description;
-            task.Status = dto.Status;
-            task.UpdatedAt = DateTime.UtcNow;
-
-            _context.SaveChanges();
-
-            return Ok(task);
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpDelete("{id}")]
@@ -143,14 +109,8 @@ namespace TaskManagerAPI.Controllers
 
             var userId = int.Parse(userIdClaim.Value);
 
-            var task = _context.Tasks.FirstOrDefault(t => t.Id == id);
-
-            if (task == null) return Forbid();
-
-            if (task.AssignedUserId != userId) return Forbid();
-
-            _context.Tasks.Remove(task);
-            _context.SaveChanges();
+            var deleted = _taskService.DeleteTask(id, userId);
+            if (!deleted) return NotFound();
 
             return NoContent();
         }
