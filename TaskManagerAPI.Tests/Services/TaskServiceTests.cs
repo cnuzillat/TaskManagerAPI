@@ -30,5 +30,58 @@ namespace TaskManagerAPI.Tests.Services
             task.Status.Should().Be(Models.TaskStatus.Open);
             task.Title.Should().Be("Test Task");
         }
+
+        [Fact]
+        public async Task GetTasksForUser_ShouldOnlyReturnTasksForSpecifiedUser()
+        {
+            var context = GetDbContext();
+
+            context.Tasks.AddRange(
+                new Models.TaskItem { Title = "User 1 Task", Description = "Description", AssignedUserId = 1, Status = Models.TaskStatus.Open },
+                new Models.TaskItem { Title = "User 2 Task", Description = "Description", AssignedUserId = 2, Status = Models.TaskStatus.Open });
+
+            await context.SaveChangesAsync();
+
+            var service = new TaskService(context);
+
+            var tasks = await service.GetTasksForUser(1);
+
+            tasks.Should().HaveCount(1);
+
+            tasks[0].AssignedUserId.Should().Be(1);
+            tasks[0].Title.Should().Be("User 1 Task");
+        }
+
+        [Fact]
+        public async Task GetTaskById_ShouldReturnNull_WhenUserDoesNotOwnTask()
+        {
+            var context = GetDbContext();
+
+            var task = new Models.TaskItem { Title = "User 1 Task", Description = "Description", AssignedUserId = 1, Status = Models.TaskStatus.Open };
+            context.Tasks.Add(task);
+
+            await context.SaveChangesAsync();
+
+            var service = new TaskService(context);
+
+            var result = await service.GetTaskById(task.Id, 2);
+            result.Should().BeNull();
+        }
+
+        [Fact]
+        public async Task DeleteTask_ShouldReturnFalse_WhenUserDoesNotOwnTask()
+        {
+            var context = GetDbContext();
+
+            var task = new Models.TaskItem { Title = "User 1 Task", Description = "Description", AssignedUserId = 1, Status = Models.TaskStatus.Open };
+            context.Tasks.Add(task);
+
+            await context.SaveChangesAsync();
+
+            var service = new TaskService(context);
+
+            var result = await service.DeleteTask(task.Id, 2);
+            result.Should().BeFalse();
+        }
     }
 }
