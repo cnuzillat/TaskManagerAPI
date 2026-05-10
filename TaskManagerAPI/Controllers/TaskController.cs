@@ -57,18 +57,10 @@ namespace TaskManagerAPI.Controllers
             var userId = GetUserId();
             if (userId == null) return Unauthorized();
 
-            try
-            {
-                var updatedTask = await _taskService.UpdateTask(id, dto.Title, dto.Description, dto.Status, userId.Value);
+            var updatedTask = await _taskService.UpdateTask(id, dto.Title, dto.Description, dto.Status, userId.Value);
+            if (updatedTask == null) return NotFound();
 
-                if (updatedTask == null) return NotFound();
-
-                return Ok(updatedTask);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            return Ok(updatedTask);
         }
 
         [HttpDelete("{id}")]

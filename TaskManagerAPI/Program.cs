@@ -72,6 +72,8 @@ app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 
+app.UseMiddleware<TaskManagerAPI.Middleware.ExceptionHandlingMiddleware>();
+
 app.UseAuthentication();
 
 app.UseAuthorization();
