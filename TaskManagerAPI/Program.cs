@@ -65,6 +65,8 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddScoped<ITaskService, TaskService>();
 
+builder.Services.AddScoped<IAuthService, AuthService>();
+
 var app = builder.Build();
 
 app.UseSwagger();
