@@ -1,6 +1,7 @@
 ﻿using TaskManagerAPI.Data;
 using TaskManagerAPI.Models;
 using Microsoft.EntityFrameworkCore;
+using TaskManagerAPI.DTOs;
 
 namespace TaskManagerAPI.Services
 {
@@ -12,17 +13,19 @@ namespace TaskManagerAPI.Services
             _context = context;
         }
 
-        public async Task<List<TaskItem>> GetTasksForUser(int userId)
+        public async Task<List<TaskResponseDto>> GetTasksForUser(int userId)
         {
-            return await _context.Tasks.Where(t => t.AssignedUserId == userId).ToListAsync();
+            var tasks = await _context.Tasks.Where(t => t.AssignedUserId == userId).ToListAsync();
+            return tasks.Select(MapToResponseDto).ToList();
         }
 
-        public async Task<TaskItem?> GetTaskById(int taskId, int userId)
+        public async Task<TaskResponseDto?> GetTaskById(int taskId, int userId)
         {
-            return await _context.Tasks.FirstOrDefaultAsync(t => t.Id == taskId && t.AssignedUserId == userId);
+            var task = await _context.Tasks.FirstOrDefaultAsync(t => t.Id == taskId && t.AssignedUserId == userId);
+            return task == null ? null : MapToResponseDto(task);
         }
 
-        public async Task<TaskItem> CreateTask(string title, string description, int userId)
+        public async Task<TaskResponseDto> CreateTask(string title, string description, int userId)
         {
             var task = new TaskItem
             {
@@ -35,10 +38,10 @@ namespace TaskManagerAPI.Services
             };
             _context.Tasks.Add(task);
             await _context.SaveChangesAsync();
-            return task;
+            return MapToResponseDto(task);
         }
 
-        public async Task<TaskItem?> UpdateTask(int taskId, string title, string description, Models.TaskStatus status, int userId)
+        public async Task<TaskResponseDto?> UpdateTask(int taskId, string title, string description, Models.TaskStatus status, int userId)
         {
             var task = await _context.Tasks.FirstOrDefaultAsync(t => t.Id == taskId && t.AssignedUserId == userId);
             if (task == null) return null;
@@ -49,7 +52,7 @@ namespace TaskManagerAPI.Services
             task.Status = status;
             task.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
-            return task;
+            return MapToResponseDto(task);
         }
 
         public async Task<bool> DeleteTask(int taskId, int userId)
@@ -70,6 +73,19 @@ namespace TaskManagerAPI.Services
                 Models.TaskStatus.InProgress => newStatus == Models.TaskStatus.Completed,
                 Models.TaskStatus.Completed => false,
                 _ => false
+            };
+        }
+
+        private TaskResponseDto MapToResponseDto(TaskItem task)
+        {
+            return new TaskResponseDto
+            {
+                id = task.Id,
+                title = task.Title,
+                description = task.Description,
+                status = task.Status.ToString(),
+                createdAt = task.CreatedAt,
+                updatedAt = task.UpdatedAt
             };
         }
     }
