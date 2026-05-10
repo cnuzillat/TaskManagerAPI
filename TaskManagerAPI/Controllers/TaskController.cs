@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using TaskManagerAPI.Services;
-using TaskManagerAPI.DTOs;
+using TaskManagerAPI.DTOs.Tasks;
 
 namespace TaskManagerAPI.Controllers
 {

@@ -1,16 +1,13 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace TaskManagerAPI.DTOs
+namespace TaskManagerAPI.DTOs.Tasks
 {
-    public class UpdateTaskDto
+    public class CreateTaskDto
     {
         [Required]
         public string Title { get; set; }
 
         [Required]
         public string Description { get; set; }
-
-        [Required]
-        public Models.TaskStatus Status { get; set; }
     }
 }

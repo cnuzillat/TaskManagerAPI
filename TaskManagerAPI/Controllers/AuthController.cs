@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using TaskManagerAPI.DTOs.Auth;
 
 namespace TaskManagerAPI.Controllers
 {
@@ -22,25 +23,30 @@ namespace TaskManagerAPI.Controllers
         }
 
         [HttpPost("register")]
-        public IActionResult Register(User user)
+        public async Task<IActionResult> Register(RegisterDto dto)
         {
-            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(user.PasswordHash);
-            user.Role = "User";
+            var user = new User
+            {
+                Email = dto.Email,
+                Username = dto.Username,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
+                Role = "User"
+            };
             _context.Users.Add(user);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return Ok(user);
         }
 
         [HttpPost("login")]
-        public IActionResult Login(User loginUser)
+        public IActionResult Login(LoginDto dto)
         {
-            var user = _context.Users.FirstOrDefault(u => u.Email == loginUser.Email);
-            if (user == null || !BCrypt.Net.BCrypt.Verify(loginUser.PasswordHash, user.PasswordHash))
+            var user = _context.Users.FirstOrDefault(u => u.Email == dto.Email);
+            if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
             {
                 return Unauthorized("Invalid credentials");
             }
             var token = GenerateJwtToken(user);
-            return Ok(new { token });
+            return Ok(new AuthResponseDto { Email = user.Email, Role = user.Role, Token = token });
         }
 
         private string GenerateJwtToken(User user)

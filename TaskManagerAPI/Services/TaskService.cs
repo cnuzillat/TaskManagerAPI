@@ -1,7 +1,7 @@
 ﻿using TaskManagerAPI.Data;
 using TaskManagerAPI.Models;
 using Microsoft.EntityFrameworkCore;
-using TaskManagerAPI.DTOs;
+using TaskManagerAPI.DTOs.Tasks;
 
 namespace TaskManagerAPI.Services
 {
