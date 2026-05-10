@@ -2,11 +2,11 @@
 {
     public class TaskResponseDto
     {
-        public int id { get; set; }
-        public string title { get; set; }
-        public string description { get; set; }
-        public string status { get; set; }
-        public DateTime createdAt { get; set; }
-        public DateTime updatedAt { get; set; }
+        public int Id { get; set; }
+        public required string Title { get; set; }
+        public required string Description { get; set; }
+        public Models.TaskStatus Status { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
     }
 }

@@ -26,7 +26,7 @@ namespace TaskManagerAPI.Tests.Services
 
             var task = await service.CreateTask("Test Task", "Test Description", userId);
 
-            task.AssignedUserId.Should().Be(userId);
+            context.Tasks.First().AssignedUserId.Should().Be(userId);
             task.Status.Should().Be(Models.TaskStatus.Open);
             task.Title.Should().Be("Test Task");
         }
@@ -48,7 +48,6 @@ namespace TaskManagerAPI.Tests.Services
 
             tasks.Should().HaveCount(1);
 
-            tasks[0].AssignedUserId.Should().Be(1);
             tasks[0].Title.Should().Be("User 1 Task");
         }
 

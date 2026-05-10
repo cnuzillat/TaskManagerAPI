@@ -80,12 +80,12 @@ namespace TaskManagerAPI.Services
         {
             return new TaskResponseDto
             {
-                id = task.Id,
-                title = task.Title,
-                description = task.Description,
-                status = task.Status.ToString(),
-                createdAt = task.CreatedAt,
-                updatedAt = task.UpdatedAt
+                Id = task.Id,
+                Title = task.Title,
+                Description = task.Description,
+                Status = task.Status,
+                CreatedAt = task.CreatedAt,
+                UpdatedAt = task.UpdatedAt
             };
         }
     }

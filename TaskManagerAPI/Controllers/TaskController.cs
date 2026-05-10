@@ -36,7 +36,7 @@ namespace TaskManagerAPI.Controllers
 
             var createdTask = await _taskService.CreateTask(dto.Title, dto.Description, userId.Value);
 
-            return CreatedAtAction(nameof(GetTaskById), new { id = createdTask.Id }, createdTask);
+            return CreatedAtAction(nameof(GetTaskById), new { createdTask.Id }, createdTask);
         }
 
         [HttpGet("{id}")]
