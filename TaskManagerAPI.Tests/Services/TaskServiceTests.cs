@@ -83,5 +83,58 @@ namespace TaskManagerAPI.Tests.Services
             var result = await service.DeleteTask(task.Id, 2);
             result.Should().BeFalse();
         }
+
+        [Fact]
+        public async Task UpdateTask_ShouldAllowValidStatusTransition()
+        {
+            var context = GetDbContext();
+
+            var task = new Models.TaskItem { Title = "User 1 Task", Description = "Description", AssignedUserId = 1, Status = Models.TaskStatus.Open };
+            context.Tasks.Add(task);
+
+            await context.SaveChangesAsync();
+
+            var service = new TaskService(context);
+
+            var updatedTask = await service.UpdateTask(task.Id, "Updated Title", "Updated Description", Models.TaskStatus.InProgress, 1);
+
+            updatedTask.Should().NotBeNull();
+
+            updatedTask!.Status.Should().Be(Models.TaskStatus.InProgress);
+        }
+
+        [Fact]
+        public async Task UpdateTask_ShouldThrowException_ForInvalidStatusTransition()
+        {
+            var context = GetDbContext();
+
+            var task = new Models.TaskItem { Title = "User 1 Task", Description = "Description", AssignedUserId = 1, Status = Models.TaskStatus.Open };
+            context.Tasks.Add(task);
+
+            await context.SaveChangesAsync();
+
+            var service = new TaskService(context);
+
+            Func<Task> act = async () => await service.UpdateTask(task.Id, "Updated Title", "Updated Description", Models.TaskStatus.Completed, 1);
+
+            await act.Should().ThrowAsync<InvalidOperationException>();
+        }
+
+        [Fact]
+        public async Task UpdateTask_ShouldRejectChangesToCompletedTask()
+        {
+            var context = GetDbContext();
+
+            var task = new Models.TaskItem { Title = "User 1 Task", Description = "Description", AssignedUserId = 1, Status = Models.TaskStatus.Completed };
+            context.Tasks.Add(task);
+
+            await context.SaveChangesAsync();
+
+            var service = new TaskService(context);
+
+            Func<Task> act = async () => await service.UpdateTask(task.Id, "Updated Title", "Updated Description", Models.TaskStatus.InProgress, 1);
+
+            await act.Should().ThrowAsync<InvalidOperationException>();
+        }
     }
 }
