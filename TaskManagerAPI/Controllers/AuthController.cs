@@ -40,5 +40,16 @@ namespace TaskManagerAPI.Controllers
 
             return Ok(response);
         }
+
+        [HttpPost("refresh")]
+        public async Task<IActionResult> Refresh([FromBody] RefreshTokenDto dto)
+        {
+            var response = await _authService.RefreshToken(dto.RefreshToken);
+            if (response == null)
+            {
+                return Unauthorized(new { error = "Invalid refresh token" });
+            }
+            return Ok(response);
+        }
     }
 }

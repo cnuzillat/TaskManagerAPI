@@ -6,6 +6,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Security.Cryptography;
 
 namespace TaskManagerAPI.Services
 {
@@ -34,11 +35,23 @@ namespace TaskManagerAPI.Services
             
             var token = GenerateJwtToken(user);
 
+            var refreshToken = new RefreshToken
+            {
+                Token = GenerateRefreshToken(),
+                ExpiresAt = DateTime.UtcNow.AddDays(7),
+                CreatedAt = DateTime.UtcNow,
+                UserId = user.Id
+            };
+
+            _context.RefreshTokens.Add(refreshToken);
+            await _context.SaveChangesAsync();
+
             return new AuthResponseDto
             {
                 Token = token,
                 Email = user.Email,
-                Role = user.Role
+                Role = user.Role,
+                RefreshToken = refreshToken.Token
             };
         }
 
@@ -54,11 +67,23 @@ namespace TaskManagerAPI.Services
 
             var token = GenerateJwtToken(user);
 
+            var refreshToken = new RefreshToken
+            {
+                Token = GenerateRefreshToken(),
+                ExpiresAt = DateTime.UtcNow.AddDays(7),
+                CreatedAt = DateTime.UtcNow,
+                UserId = user.Id
+            };
+
+            _context.RefreshTokens.Add(refreshToken);
+            await _context.SaveChangesAsync();
+
             return new AuthResponseDto
             {
                 Token = token,
                 Email = user.Email,
-                Role = user.Role
+                Role = user.Role,
+                RefreshToken = refreshToken.Token
             };
         }
 
@@ -86,6 +111,38 @@ namespace TaskManagerAPI.Services
                 signingCredentials: creds
             );
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        private string GenerateRefreshToken()
+        {
+            var randomBytes = RandomNumberGenerator.GetBytes(64);
+            return Convert.ToBase64String(randomBytes);
+        }
+
+        public async Task<AuthResponseDto?> RefreshToken(string refreshToken)
+        {
+            var storedToken = await _context.RefreshTokens
+                .Include(rt => rt.User)
+                .FirstOrDefaultAsync(rt => rt.Token == refreshToken);
+            if (storedToken == null || storedToken.ExpiresAt < DateTime.UtcNow || storedToken.IsRevoked)
+                return null;
+
+            var newJwtToken = GenerateJwtToken(storedToken.User);
+
+            var newRefreshToken = GenerateRefreshToken();
+
+            storedToken.Token = newRefreshToken;
+            storedToken.ExpiresAt = DateTime.UtcNow.AddDays(7);
+
+            await _context.SaveChangesAsync();
+
+            return new AuthResponseDto
+            {
+                Token = newJwtToken,
+                Email = storedToken.User.Email,
+                Role = storedToken.User.Role,
+                RefreshToken = newRefreshToken
+            };
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.Diagnostics;
+using System.Net;
 using System.Text.Json;
 
 namespace TaskManagerAPI.Middleware
@@ -30,14 +31,15 @@ namespace TaskManagerAPI.Middleware
 
                 await context.Response.WriteAsync(JsonSerializer.Serialize(response));
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
                 context.Response.ContentType = "application/json";
 
-                var response = new 
+                var response = new
                 {
-                    error = "An unexpected error occurred. Please try again later."
+                    error = ex.Message,
+                    StackTrace = ex.StackTrace
                 };
 
                 await context.Response.WriteAsync(JsonSerializer.Serialize(response));
