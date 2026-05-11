@@ -22,7 +22,7 @@ namespace TaskManagerAPI.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register(RegisterDto dto)
+        public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
             var response = await _authService.Register(dto);
 
@@ -30,7 +30,7 @@ namespace TaskManagerAPI.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login(LoginDto dto)
+        public async Task<IActionResult> Login([FromBody] LoginDto dto)
         {
             var response = await _authService.Login(dto);
             if (response == null)

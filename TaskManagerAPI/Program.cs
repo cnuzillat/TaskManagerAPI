@@ -43,7 +43,8 @@ builder.Services.AddSwaggerGen(options =>
 });
 builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-var jwtKey = builder.Configuration["Jwt:Key"];
+var jwtKey = builder.Configuration["Jwt:Key"]
+    ?? throw new Exception("JWT Key missing");
 
 builder.Services.AddAuthentication(options =>
 {
