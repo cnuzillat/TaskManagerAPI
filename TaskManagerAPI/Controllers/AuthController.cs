@@ -49,7 +49,20 @@ namespace TaskManagerAPI.Controllers
             {
                 return Unauthorized(new { error = "Invalid refresh token" });
             }
+
             return Ok(response);
+        }
+
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout([FromBody] RefreshTokenDto dto)
+        {
+            var success = await _authService.Logout(dto.RefreshToken);
+            if (!success)
+            {
+                return Unauthorized(new { error = "Invalid refresh token" });
+            }
+
+            return Ok(new { message = "Logged out successfully" });
         }
     }
 }

@@ -144,5 +144,20 @@ namespace TaskManagerAPI.Services
                 RefreshToken = newRefreshToken
             };
         }
+
+        public async Task<bool> Logout(string refreshToken)
+        {
+            var storedToken = await _context.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == refreshToken);
+            if (storedToken == null)
+                return false;
+
+            if (storedToken.IsRevoked)
+                return false;
+            storedToken.IsRevoked = true;
+
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
     }
 }
