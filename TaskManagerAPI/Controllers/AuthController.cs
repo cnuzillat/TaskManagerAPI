@@ -7,6 +7,7 @@ using System.Security.Claims;
 using System.Text;
 using TaskManagerAPI.DTOs.Auth;
 using TaskManagerAPI.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace TaskManagerAPI.Controllers
 {
@@ -53,6 +54,7 @@ namespace TaskManagerAPI.Controllers
             return Ok(response);
         }
 
+        [Authorize]
         [HttpPost("logout")]
         public async Task<IActionResult> Logout([FromBody] RefreshTokenDto dto)
         {

@@ -46,6 +46,12 @@ builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(buil
 var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new Exception("JWT Key missing");
 
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("UserOnly", policy => policy.RequireRole("User", "Admin"));
+});
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;

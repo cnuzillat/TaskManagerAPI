@@ -93,7 +93,7 @@ namespace TaskManagerAPI.Services
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Name, user.Email),
-                new Claim(ClaimTypes.Role, user.Role)
+                new Claim(ClaimTypes.Role, user.Role),
             };
 
             var jwtKey = _configuration["Jwt:Key"]

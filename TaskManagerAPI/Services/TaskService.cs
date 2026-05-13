@@ -88,5 +88,11 @@ namespace TaskManagerAPI.Services
                 UpdatedAt = task.UpdatedAt
             };
         }
+
+        public async Task<List<TaskResponseDto>> GetAllTasks()
+        {
+            var tasks = await _context.Tasks.ToListAsync();
+            return tasks.Select(MapToResponseDto).ToList();
+        }
     }
 }

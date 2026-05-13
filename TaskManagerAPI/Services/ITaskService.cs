@@ -10,5 +10,6 @@ namespace TaskManagerAPI.Services
         Task<TaskResponseDto> CreateTask(string title, string description, int userId);
         Task<TaskResponseDto?> UpdateTask(int taskId, string title, string description, Models.TaskStatus status, int userId);
         Task<bool> DeleteTask(int taskId, int userId);
+        Task<List<TaskResponseDto>> GetAllTasks();
     }
 }

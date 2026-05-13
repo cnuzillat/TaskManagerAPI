@@ -28,6 +28,14 @@ namespace TaskManagerAPI.Controllers
             return Ok(tasks);
         }
 
+        [Authorize(Policy = "AdminOnly")]
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAllTasks()
+        {
+            var tasks = await _taskService.GetAllTasks();
+            return Ok(tasks);
+        }
+
         [HttpPost]
         public async Task<IActionResult> CreateTask(CreateTaskDto dto)
         {
