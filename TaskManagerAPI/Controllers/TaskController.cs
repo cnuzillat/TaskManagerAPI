@@ -19,12 +19,12 @@ namespace TaskManagerAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetTasks()
+        public async Task<IActionResult> GetTasks([FromQuery] TaskQueryParametersDto query)
         {
             var userId = GetUserId();
             if (userId == null) return Unauthorized();
 
-            var tasks = await _taskService.GetTasksForUser(userId.Value);
+            var tasks = await _taskService.GetTasksForUser(userId.Value. query);
             return Ok(tasks);
         }
 

@@ -13,9 +13,37 @@ namespace TaskManagerAPI.Services
             _context = context;
         }
 
-        public async Task<List<TaskResponseDto>> GetTasksForUser(int userId)
+        public async Task<List<TaskResponseDto>> GetTasksForUser(int userId, TaskQueryParametersDto query)
         {
-            var tasks = await _context.Tasks.Where(t => t.AssignedUserId == userId).ToListAsync();
+            query.Page = Math.Max(query.Page, 1);
+            query.PageSize = Math.Clamp(query.PageSize, 1, 100);
+
+            var tasksQuery = _context.Tasks.Where(t => t.AssignedUserId == userId).AsQueryable();
+
+            if (!string.IsNullOrEmpty(query.Status))
+            {
+                if (Enum.TryParse<Models.TaskStatus>(query.Status, true, out var status))
+                {
+                    tasksQuery = tasksQuery.Where(t => t.Status == status);
+                }
+            }
+
+            if (!string.IsNullOrEmpty(query.SortBy))
+            {
+                tasksQuery = query.SortBy.ToLower() switch
+                {
+                    "title" => query.Descending ? tasksQuery.OrderByDescending(t => t.Title) : tasksQuery.OrderBy(t => t.Title),
+                    "createdat" => query.Descending ? tasksQuery.OrderByDescending(t => t.CreatedAt) : tasksQuery.OrderBy(t => t.CreatedAt),
+                    "updatedat" => query.Descending ? tasksQuery.OrderByDescending(t => t.UpdatedAt) : tasksQuery.OrderBy(t => t.UpdatedAt),
+                    _ => tasksQuery
+                };
+            }
+
+            var tasks = await tasksQuery
+                .Skip((query.Page - 1) * query.PageSize)
+                .Take(query.PageSize)
+                .ToListAsync();
+
             return tasks.Select(MapToResponseDto).ToList();
         }
 
