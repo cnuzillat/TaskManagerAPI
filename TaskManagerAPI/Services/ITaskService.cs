@@ -1,5 +1,4 @@
 ﻿using TaskManagerAPI.DTOs.Tasks;
-using TaskManagerAPI.Models;
 
 namespace TaskManagerAPI.Services
 {

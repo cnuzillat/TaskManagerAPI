@@ -24,7 +24,7 @@ namespace TaskManagerAPI.Controllers
             var userId = GetUserId();
             if (userId == null) return Unauthorized();
 
-            var tasks = await _taskService.GetTasksForUser(userId.Value. query);
+            var tasks = await _taskService.GetTasksForUser(userId.Value, query);
             return Ok(tasks);
         }
 
