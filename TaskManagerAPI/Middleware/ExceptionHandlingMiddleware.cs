@@ -26,7 +26,9 @@ namespace TaskManagerAPI.Middleware
 
                 var response = new 
                 {
-                    error = ex.Message
+                    error = ex.Message,
+                    inner = ex.InnerException?.Message,
+                    stackTrace = ex.StackTrace
                 };
 
                 await context.Response.WriteAsync(JsonSerializer.Serialize(response));
@@ -39,7 +41,8 @@ namespace TaskManagerAPI.Middleware
                 var response = new
                 {
                     error = ex.Message,
-                    StackTrace = ex.StackTrace
+                    inner = ex.InnerException?.Message,
+                    stackTrace = ex.StackTrace
                 };
 
                 await context.Response.WriteAsync(JsonSerializer.Serialize(response));

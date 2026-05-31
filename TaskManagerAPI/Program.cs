@@ -41,7 +41,11 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 });
-builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        sqlOptions => sqlOptions.EnableRetryOnFailure()
+    ));
 
 var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new Exception("JWT Key missing");
@@ -74,6 +78,8 @@ builder.Services.AddScoped<ITaskService, TaskService>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 
+Console.WriteLine(builder.Configuration.GetConnectionString("DefaultConnection"));
+
 var app = builder.Build();
 
 app.UseSwagger();
@@ -88,6 +94,31 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    const int maxRetries = 10;
+
+    for (int i = 0; i < maxRetries; i++)
+    {
+        try
+        {
+            dbContext.Database.Migrate();
+            break;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Migration attempt {i + 1} failed.");
+
+            if (i == maxRetries - 1)
+                throw;
+
+            await Task.Delay(5000);
+        }
+    }
+}
 
 app.Run();
 
