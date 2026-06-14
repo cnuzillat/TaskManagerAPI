@@ -1,23 +1,24 @@
 ﻿using FluentAssertions;
-using Microsoft.AspNetCore.Mvc.Testing;
+using System.Net;
 
 namespace TaskManagerAPI.Tests.Integration
 {
-    public class TaskApiIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
+    public class TaskApiIntegrationTests: IClassFixture<CustomWebApplicationFactory>
     {
         private readonly HttpClient _client;
 
-        public TaskApiIntegrationTests(WebApplicationFactory<Program> factory)
+        public TaskApiIntegrationTests(
+            CustomWebApplicationFactory factory)
         {
             _client = factory.CreateClient();
         }
 
         [Fact]
-        public async Task GetTasks_ShouldReturnUnathorized_WithoutToken()
+        public async Task GetTasks_ShouldReturnUnauthorized_WithoutToken()
         {
             var response = await _client.GetAsync("/api/tasks");
 
-            response.StatusCode.Should().Be(System.Net.HttpStatusCode.Unauthorized);
+            response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
         }
     }
 }

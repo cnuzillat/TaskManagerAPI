@@ -44,7 +44,7 @@ namespace TaskManagerAPI.Tests.Services
 
             var service = new TaskService(context);
 
-            var tasks = await service.GetTasksForUser(1);
+            var tasks = await service.GetTasksForUser(1, new DTOs.Tasks.TaskQueryParametersDto());
 
             tasks.Should().HaveCount(1);
 

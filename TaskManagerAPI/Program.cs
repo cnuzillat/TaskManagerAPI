@@ -95,8 +95,9 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-using (var scope = app.Services.CreateScope())
+if (!app.Environment.IsEnvironment("Testing"))
 {
+    using var scope = app.Services.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
     const int maxRetries = 10;
@@ -110,7 +111,7 @@ using (var scope = app.Services.CreateScope())
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Migration attempt {i + 1} failed.");
+            Console.WriteLine($"Migration attempt {i + 1} failed: {ex.Message}");
 
             if (i == maxRetries - 1)
                 throw;
