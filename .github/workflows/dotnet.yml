@@ -9,22 +9,23 @@ on:
       - master
 
 jobs:
-    build-and-test:
-        runs-on: ubuntu-latest
-        steps:
-          - name: Checkout Repository
-            uses: actions/checkout@v4
-        
-          - name: Setup .NET
-            uses: actions/setup-dotnet@v4
-            with:
-              dotnet-version: '9.0.x'
+  build-and-test:
+    runs-on: ubuntu-latest
 
-          - name: Restore dependencies
-            run: dotnet restore
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-          - name: Build
-            run: dotnet build --configuration Release --no-restore
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
 
-          - name: Run Tests
-            run: dotnet test --no-build --configuration Release
+      - name: Restore Dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Run Tests
+        run: dotnet test --no-build --configuration Release
